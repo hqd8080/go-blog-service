@@ -37,7 +37,6 @@ func setupSetting() error {
 	conf.ServerConfig.ReadTimeout *= time.Second
 	conf.ServerConfig.WriteTimeout *= time.Second
 	return nil
-
 }
 
 func init() {
