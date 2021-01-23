@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hqd8080/go-blog-service/conf"
+	"github.com/hqd8080/go-blog-service/model"
 	"github.com/hqd8080/go-blog-service/routers"
 )
 
@@ -39,12 +40,23 @@ func setupSetting() error {
 	return nil
 }
 
+func setupDB() error {
+	err := model.NewDBConnection(conf.MysqlConfig)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func init() {
 	err := setupSetting()
 	if err != nil {
 		panic(err)
 	}
-	// 初始化数据库连接
+	err = setupDB()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
