@@ -1,6 +1,6 @@
 /**
  * @Author: hqd
- * @Description:
+ * @Description: main
  * @File:  main
  * @Version: 1.0.0
  * @Date: 2021/1/17 15:13
@@ -8,8 +8,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +45,7 @@ func setupSetting() error {
 	return nil
 }
 
-func setupDB() error {
+func setupDatabase() error {
 	err := model.NewDBConnection(conf.MysqlConfig)
 	if err != nil {
 		return err
@@ -53,7 +58,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = setupDB()
+	err = setupDatabase()
 	if err != nil {
 		panic(err)
 	}
@@ -77,5 +82,22 @@ func main() {
 		BaseContext:       nil,
 		ConnContext:       nil,
 	}
-	srv.ListenAndServe()
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("server forced to shutdown:", err)
+	}
+
+	log.Println("server exiting")
 }
